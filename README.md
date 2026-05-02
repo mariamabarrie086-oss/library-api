@@ -1,6 +1,8 @@
-# Library API (single-file)
+# library-api
 
-Minimal FastAPI library demo for coursework.
+A simple FastAPI-based Library Management API with async endpoints for borrowing and returning books.
+
+Minimal single-file demo (`main.py`) for coursework.
 
 ## Run
 
