@@ -1,22 +1,21 @@
-# library-api
+# Simple Library API Simulation
 
-A simple FastAPI-based Library Management API with async endpoints for borrowing and returning books.
+This project is a **Python simulation of API-style behavior** using plain functions. There is **no web server** and **no frameworks**—only the standard library (`asyncio`). It helps you practice how `GET` and `POST` style actions can be modeled as async functions.
 
-Minimal single-file demo (`main.py`) for coursework.
+## Simulated endpoints
 
-## Run
+| HTTP idea | Python function |
+|-----------|-----------------|
+| `GET /books` | `get_books()` |
+| `POST /borrow` | `borrow_book(user_id, book_id)` |
+
+- `GET /books` -> `get_books()`
+- `POST /borrow` -> `borrow_book(user_id, book_id)`
+
+## How to run
 
 ```bash
-pip install -r requirements.txt
-uvicorn main:app --reload
+python main.py
 ```
 
-Open http://127.0.0.1:8000/docs to try the API.
-
-## Endpoints
-
-- `GET /books` — list all books
-- `POST /borrow` — JSON body: `user_id`, `book_id`
-- `POST /return` — JSON body: `user_id`, `book_id`
-
-Responses use `{"message": "...", "data": ...}`.
+You should see the catalog printed, then the result of a borrow, a failed second borrow on the same book, and the updated catalog.

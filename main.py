@@ -1,74 +1,75 @@
-"""Library Management API — single-file FastAPI app. Run: uvicorn main:app --reload"""
+"""Simple Library API simulation — plain Python only (no web server)."""
 
 from __future__ import annotations
 
 import asyncio
 
-from fastapi import FastAPI
-from fastapi.responses import JSONResponse
-from pydantic import BaseModel, Field
-
-# In-memory catalog (id -> book fields)
-books: dict[int, dict[str, str | bool]] = {
-    1: {"title": "Introduction to Algorithms", "author": "Cormen et al.", "available": True},
-    2: {"title": "Clean Architecture", "author": "Robert C. Martin", "available": True},
-    3: {"title": "Python Crash Course", "author": "Eric Matthes", "available": True},
-}
-
-app = FastAPI(title="Library API", version="1.0.0")
+# In-memory list of books (like a tiny database in RAM)
+BOOKS: list[dict[str, int | str | bool]] = [
+    {"id": 1, "title": "Intro to Data Structures", "author": "Maraima Barrie", "available": True},
+    {"id": 2, "title": "Short Stories", "author": "Amie", "available": True},
+    {"id": 3, "title": "Math for Beginners", "author": "Sulaman", "available": True},
+    {"id": 4, "title": "Computer Basics", "author": "Zakaria", "available": True},
+    {"id": 5, "title": "Python Workshop", "author": "Kamara", "available": True},
+]
 
 
-class BorrowReturnBody(BaseModel):
-    user_id: int = Field(..., ge=1)
-    book_id: int = Field(..., ge=1)
+async def get_books() -> list[dict[str, int | str | bool]]:
+    """Simulates GET /books — returns the full catalog."""
+    return list(BOOKS)
 
 
-@app.get("/books")
-async def get_books() -> dict[str, object]:
-    listed = [{"id": bid, **data} for bid, data in books.items()]
-    return {"message": "OK", "data": {"books": listed}}
-
-
-@app.post("/borrow")
-async def borrow(body: BorrowReturnBody) -> JSONResponse:
+async def borrow_book(user_id: int, book_id: int) -> dict[str, object]:
+    """Simulates POST /borrow — checks the book, then marks it unavailable if possible."""
+    # Pretend we are waiting on a network or database
     await asyncio.sleep(1)
-    book = books.get(body.book_id)
-    if book is None:
-        return JSONResponse(
-            status_code=404,
-            content={"message": "Book not found.", "data": None},
-        )
-    if not book["available"]:
-        return JSONResponse(
-            status_code=400,
-            content={"message": "Book is not available.", "data": {"book_id": body.book_id}},
-        )
-    book["available"] = False
-    return JSONResponse(
-        content={
+
+    for book in BOOKS:
+        if book["id"] != book_id:
+            continue
+        if not book["available"]:
+            return {
+                "ok": False,
+                "message": "Error: book is not available (already borrowed).",
+                "user_id": user_id,
+                "book_id": book_id,
+            }
+        book["available"] = False
+        return {
+            "ok": True,
             "message": "Borrowed successfully.",
-            "data": {
-                "user_id": body.user_id,
-                "book_id": body.book_id,
-                "title": book["title"],
-            },
+            "user_id": user_id,
+            "book_id": book_id,
+            "title": book["title"],
         }
-    )
+
+    return {
+        "ok": False,
+        "message": "Error: book does not exist.",
+        "user_id": user_id,
+        "book_id": book_id,
+    }
 
 
-@app.post("/return")
-async def return_book(body: BorrowReturnBody) -> JSONResponse:
-    await asyncio.sleep(1)
-    book = books.get(body.book_id)
-    if book is None:
-        return JSONResponse(
-            status_code=404,
-            content={"message": "Book not found.", "data": None},
-        )
-    book["available"] = True
-    return JSONResponse(
-        content={
-            "message": "Returned successfully.",
-            "data": {"user_id": body.user_id, "book_id": body.book_id},
-        }
-    )
+async def main() -> None:
+    """Run a tiny demo: list books, borrow one, try to borrow again, show final list."""
+    print("--- GET /books -> get_books() ---")
+    books = await get_books()
+    for b in books:
+        print(b)
+
+    print("\n--- POST /borrow -> borrow_book(user_id=1, book_id=1) ---")
+    first = await borrow_book(1, 1)
+    print(first)
+
+    print("\n--- POST /borrow again (same book, should fail) ---")
+    second = await borrow_book(2, 1)
+    print(second)
+
+    print("\n--- Catalog after borrows ---")
+    for b in await get_books():
+        print(b)
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
